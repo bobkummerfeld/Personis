@@ -1,0 +1,4 @@
+PYTHONPATH=`pwd`/Src:`pwd`/lib/python:`pwd`/lib64/python; export PYTHONPATH
+echo PYTHONPATH is $PYTHONPATH
+export MODELDIR=`pwd`/Tests/Models
+echo MODELDIR is $MODELDIR
