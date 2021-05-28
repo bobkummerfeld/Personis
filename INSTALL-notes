@@ -1,0 +1,25 @@
+
+To install pycrypto you need the python-dev package installed
+	sudo apt-get install python-dev
+
+The config files should be:
+
+$HOME/.personis.conf :
+
+[personis_client]
+client.serverHost = "127.0.0.1"
+client.serverPort = 2005
+client.ca_certs_file = "ca_certs/ca_certs.txt"
+
+$HOME/.personis_server.conf :
+
+[global]
+server.socket_host = "127.0.0.1"
+server.socket_port = 2005
+server.ssl_module = "pyopenssl"
+server.ssl_certificate = "./personis_server_cert.pem"
+server.ssl_private_key = "./personis_server_priv.key"
+server.threadPool = 10
+server.environment = "development"
+autoreload.on = False
+
