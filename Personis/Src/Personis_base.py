@@ -8,10 +8,11 @@
 
 import os, shelve, sys, fcntl, time, string, glob
 import hashlib
-try:
-	import bsddb
-except:
-	import bsddb3 as bsddb
+#try:
+#	import bsddb
+#except:
+#	import bsddb3 as bsddb
+import dbm
 from types import *
 import Resolvers
 import Ev_filters
@@ -170,8 +171,10 @@ def generate_app_signature(app=None, key=None):
 	return string + ":" + signature_string
 
 def shelf_open(shelf_name, mode):
-	db = bsddb.hashopen(shelf_name, mode)
-	return shelve.BsdDbShelf(db), None
+#	db = bsddb.hashopen(shelf_name, mode)
+#	return shelve.BsdDbShelf(db), None
+	db = dbm.open(shelf_name, flag=mode) 
+	return db,None
  
  
 def shelf_close(theShelf, shelf_fd):
