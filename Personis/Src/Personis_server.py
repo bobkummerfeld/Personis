@@ -8,7 +8,7 @@
 # Active User Models: added subscribe method to Access
 #
 
-import os, sys, httplib, traceback
+import os, sys, traceback
 import jsoncall
 import bottle
 import Personis_base
@@ -22,7 +22,7 @@ import Personis_globals
 
 def MkModel( model=None, modelserver=None, user=None, password=None, description=None, debug=1):
 	if modelserver == None:
-		raise ValueError, "modelserver is None"
+		raise ValueError("modelserver is None")
 	if ':' in modelserver:
 		modelserver, modelport = modelserver.split(":")
 	else:
@@ -38,13 +38,13 @@ def MkModel( model=None, modelserver=None, user=None, password=None, description
 	except:
 		if debug >0:
 			traceback.print_exc()
-		raise ValueError, "cannot create model '%s', server '%s'" % (modelname, modelserver)
+		raise ValueError("cannot create model '%s', server '%s'" % (modelname, modelserver))
 	if not ok:
-		raise ValueError, "server '%s' cannot create model '%s'" % (modelserver, modelname)
+		raise ValueError("server '%s' cannot create model '%s'" % (modelserver, modelname))
 
 def AppRequestAuth(model=None, modelserver=None, app=None, key=None, description=None, debug=0):
 	if modelserver == None:
-		raise ValueError, "modelserver is None"
+		raise ValueError("modelserver is None")
 	if ':' in modelserver:
 		modelserver, modelport = modelserver.split(":")
 	else:
@@ -59,9 +59,9 @@ def AppRequestAuth(model=None, modelserver=None, app=None, key=None, description
 	except:
 		if debug >0:
 			traceback.print_exc()
-		raise ValueError, "cannot request authorisation for app '%s', server '%s'" % (app, modelserver)
+		raise ValueError("cannot request authorisation for app '%s', server '%s'" % (app, modelserver))
 	if not ok:
-		raise ValueError, "server '%s' cannot process authorisation request for app '%s'" % (modelserver, app)
+		raise ValueError("server '%s' cannot process authorisation request for app '%s'" % (modelserver, app))
 
 class Access(Personis_a.Access):
 	""" 
@@ -81,13 +81,13 @@ class Access(Personis_a.Access):
 	"""
 	def __init__(self, model=None, modelserver=None, user=None, password=None, app=None, description="", debug=1):
 		if modelserver == None:
-			raise ValueError, "modelserver is None"
+			raise ValueError("modelserver is None")
 		if ':' in modelserver:
 			self.modelserver, self.modelport = modelserver.split(":")
 		else:
 			self.modelserver = modelserver
 			self.modelport = 2005 # default port for personis server
-		print ">>>>Access_server", self.modelserver, self.modelport
+		logging.info(">>>>Access_server %s %s", self.modelserver, self.modelport)
 		self.modelname = model
 		self.user = user
 		self.password = password
@@ -121,20 +121,19 @@ class Access(Personis_a.Access):
 			else:
 				args['authType'] = 'user'
 			args['auth'] = self.auth
-			print "debug:",self.debug
+			logging.debug("debug: %s",self.debug)
 			if self.debug != 0:
-				print "access jsondocall:", self.modelserver, self.modelport, self.modelname, self.authType, self.auth
+				logging.info("access jsondocall: %s %s %s %s %s", self.modelserver, self.modelport, self.modelname, self.authType, self.auth)
 
 			ok = jsoncall.do_call(self.modelserver, self.modelport, command, args)
 			if self.debug != 0:
-				print "---------------------- result returned", ok
+				logging.info("---------------------- result returned <%s>", ok)
 		except:
 			if debug >0:
 				traceback.print_exc()
-			raise
-			raise ValueError, "cannot access model '%s', server '%s'" % (self.modelname, self.modelserver)
+			raise ValueError("cannot access model '%s', server '%s'" % (self.modelname, self.modelserver))
 		if not ok:
-			raise ValueError, "server '%s' cannot access model '%s'" % (self.modelserver, self.modelname)
+			raise ValueError("server '%s' cannot access model '%s'" % (self.modelserver, self.modelname))
 
 	def ask(self,  
 		context=[],
@@ -191,9 +190,9 @@ class Access(Personis_a.Access):
 		evidence - evidence object to add to the component
 		"""
 		if componentid == None:
-			raise ValueError, "tell: componentid is None"
+			raise ValueError("tell: componentid is None")
 		if evidence == None:
-			raise ValueError, "tell: no evidence provided"
+			raise ValueError("tell: no evidence provided")
 		if self.authType == 'app':
 			self.auth = self.app + ":" + Personis_base.generate_app_signature(self.app, self.key)
 		return jsoncall.do_call(self.modelserver, self.modelport, "tell", {'modelname':self.modelname,\
@@ -205,7 +204,7 @@ class Access(Personis_a.Access):
 	def mkcomponent(self,
 		context=[],
 		componentobj=None):
-                """
+		"""
         Make a new component in a given context
         arguments:
                 context - a list giving the path to the required context
@@ -213,9 +212,9 @@ class Access(Personis_a.Access):
         returns:
                 None on success
                 a string error message on error
-                """
+		"""
 		if componentobj == None:
-			raise ValueError, "mkcomponent: componentobj is None"
+			raise ValueError("mkcomponent: componentobj is None")
 		if self.authType == 'app':
 			self.auth = self.app + ":" + Personis_base.generate_app_signature(self.app, self.key)
 		return jsoncall.do_call(self.modelserver, self.modelport, "mkcomponent", {'modelname':self.modelname,\
@@ -226,7 +225,7 @@ class Access(Personis_a.Access):
 	def delcomponent(self,
 		context=[],
 		componentid=None):
-                """
+		"""
         Delete an existing component in a given context
         arguments:
                 context - a list giving the path to the required context
@@ -234,9 +233,9 @@ class Access(Personis_a.Access):
         returns:
                 None on success
                 a string error message on error
-                """
+		"""
 		if componentid == None:
-			raise ValueError, "delcomponent: componentid is None"
+			raise ValueError("delcomponent: componentid is None")
 		if self.authType == 'app':
 			self.auth = self.app + ":" + Personis_base.generate_app_signature(self.app, self.key)
 		return jsoncall.do_call(self.modelserver, self.modelport, "delcomponent", {'modelname':self.modelname,\
@@ -263,7 +262,7 @@ class Access(Personis_a.Access):
 		context,
 		componentid,
 		resolver):
-                """
+		"""
         set the resolver for a given component in a given context
         arguments:
                 context - a list giving the path to the required context
@@ -272,9 +271,9 @@ class Access(Personis_a.Access):
         returns:
                 None on success
                 a string error message on error
-                """
+		"""
 		if componentid == None:
-			raise ValueError, "setresolver: componentid is None"
+			raise ValueError("setresolver: componentid is None")
 		if self.authType == 'app':
 			self.auth = self.app + ":" + Personis_base.generate_app_signature(self.app, self.key)
 		return jsoncall.do_call(self.modelserver, self.modelport, "setresolver", {'modelname':self.modelname,\
@@ -287,7 +286,7 @@ class Access(Personis_a.Access):
 	def mkview(self,
 		context=[],
 		viewobj=None):
-                """
+		"""
         Make a new view in a given context
         arguments:
                 context - a list giving the path to the required context
@@ -295,9 +294,9 @@ class Access(Personis_a.Access):
         returns:
                 None on success
                 a string error message on error
-                """
+		"""
 		if viewobj == None:
-			raise ValueError, "mkview: viewobj is None"
+			raise ValueError("mkview: viewobj is None")
 		if self.authType == 'app':
 			self.auth = self.app + ":" + Personis_base.generate_app_signature(self.app, self.key)
 		return jsoncall.do_call(self.modelserver, self.modelport, "mkview", {'modelname':self.modelname,\
@@ -308,16 +307,16 @@ class Access(Personis_a.Access):
 	def delview(self,
 		context=[],
 		viewid=None):
-                """
+		"""
         Delete an existing view in a given context
         arguments:
                 context - a list giving the path to the required context
                 viewid - the id for the view
         returns:
                 None on success
-                """
+		"""
 		if viewid == None:
-			raise ValueError, "delview: viewid is None"
+			raise ValueError("delview: viewid is None")
 		if self.authType == 'app':
 			self.auth = self.app + ":" + Personis_base.generate_app_signature(self.app, self.key)
 		return jsoncall.do_call(self.modelserver, self.modelport, "delview", {'modelname':self.modelname,\
@@ -337,7 +336,7 @@ class Access(Personis_a.Access):
 		contextobj - a Context object
 		"""
 		if contextobj == None:
-			raise ValueError, "mkcontext: contextobj is None"
+			raise ValueError("mkcontext: contextobj is None")
 		if self.authType == 'app':
 			self.auth = self.app + ":" + Personis_base.generate_app_signature(self.app, self.key)
 		return jsoncall.do_call(self.modelserver, self.modelport, "mkcontext", {'modelname':self.modelname,\
@@ -484,12 +483,12 @@ class Access(Personis_a.Access):
 											    'context':context,\
 											    'componentid':componentid})
 
-        def registerapp(self, app=None, desc="", fingerprint=None):
-                """
+	def registerapp(self, app=None, desc="", fingerprint=None):
+		"""
                         registers an app as being authorised to access this user model
                         app name is a string (needs checking TODO)
                         app passwords are stored at the top level .model db
-                """
+		"""
 		# Only users can register apps
 		return jsoncall.do_call(self.modelserver, self.modelport, "registerapp", {'modelname':self.modelname,\
 											    'authType':'user',\
@@ -499,11 +498,11 @@ class Access(Personis_a.Access):
 											    'fingerprint':fingerprint})
 	
 	def deleteapp(self, app=None):
-                """
+		"""
                         deletes an app
-                """
- 		if app == None:
-			raise ValueError, "deleteapp: app is None"
+		"""
+		if app == None:
+			raise ValueError("deleteapp: app is None")
 		if self.authType == 'app':
 			self.auth = self.app + ":" + Personis_base.generate_app_signature(self.app, self.key)
 		return jsoncall.do_call(self.modelserver, self.modelport, "deleteapp", {'modelname':self.modelname,\
@@ -531,14 +530,14 @@ class Access(Personis_a.Access):
 											'authType':self.authType,\
 											'auth':self.auth})
 
-        def setpermission(self, context=None, componentid=None, app=None, permissions={}):
-                """
+	def setpermission(self, context=None, componentid=None, app=None, permissions={}):
+		"""
                         sets ask/tell permission for a context (if componentid is None) or
                                 a component
-                """
+		"""
 		if self.authType == 'app':
 			self.auth = self.app + ":" + Personis_base.generate_app_signature(self.app, self.key)
- 		return jsoncall.do_call(self.modelserver, self.modelport, "setpermission", {'modelname':self.modelname,\
+		return jsoncall.do_call(self.modelserver, self.modelport, "setpermission", {'modelname':self.modelname,\
 											    'authType':self.authType,\
 											    'auth':self.auth,\
 											    'context': context,\
@@ -547,11 +546,11 @@ class Access(Personis_a.Access):
 											    'permissions': permissions})
 
 	def getpermission(self, context=None, componentid=None, app=None):
-                """
+		"""
                         gets permissions for a context (if componentid is None) or
                                 a component
                         returns a tuple (ask,tell)
-                """
+		"""
 		if self.authType == 'app':
 			self.auth = self.app + ":" + Personis_base.generate_app_signature(self.app, self.key)
 		return jsoncall.do_call(self.modelserver, self.modelport, "getpermission", {'modelname':self.modelname,\
@@ -574,7 +573,7 @@ def dictresult(func):
 			result = dict(result="ok", val=res)
 		except:
 			result = dict(result="error", val=None)
-		#print "dictresult>>> ", `result`
+		#print "dictresult>>> ", repr(result)
 		return json.dumps(result)
 	return mkdict
 
@@ -624,7 +623,7 @@ def s_tell():
 	try:
 		res = um.tell(context=pargs['context'], componentid=pargs['componentid'], evidence=Personis_base.Evidence(**pargs['evidence']))
 	except Exception as e:
-		return "tell failed: %s\n"%(`e`)
+		return "tell failed: %s\n"%(repr(e))
 	return res
 
 @bottle.route('/ask', method='post')
@@ -632,7 +631,6 @@ def s_tell():
 def s_ask():
 	#print "Entering ask function...."; sys.stdout.flush()
 	b = bottle.request.body.read()
-	#print `b`;sys.stdout.flush()
 	pargs = json.loads(b)
 	#pargs = json.loads(bottle.request.body.read())
 	um = Personis_a.Access(model=pargs['modelname'], modeldir=Personis_globals.modeldir, authType=pargs['authType'], auth=pargs['auth'])
@@ -662,7 +660,7 @@ def s_ask():
 @dictresult
 def s_subscribe():
 	pargs = json.loads(bottle.request.body.read())
-	print "s_subscribe>> pargs:", pargs
+	logging.info("s_subscribe>> pargs: %s", pargs)
 	um = Personis_a.Access(model=pargs['modelname'], modeldir=Personis_globals.modeldir, authType=pargs['authType'], auth=pargs['auth'])
 	res = um.subscribe(context=pargs['context'], view=pargs['view'], subscription=pargs['subscription'])
 	return res

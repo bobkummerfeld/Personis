@@ -14,6 +14,7 @@ import Personis_globals
 from Personis_exceptions import *
 import socket
 import os
+import logging
 import argparse
 import ConfigParser
 from multiprocessing import Process, Queue
@@ -53,17 +54,18 @@ class Access(Personis_server.Access):
 			self.modelserver = self.hostname + ":" + str(self.port)
 		else:
 			self.modelserver = modelserver
-		print ">>>>Access:", self.modelname, self.modelserver
+		logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
+		logging.info(">>>>Access: %s::%s", self.modelname, self.modelserver)
 
 		Personis_server.Access.__init__(self, model=self.modelname, modelserver=self.modelserver, user=user, password=password, app=app, description=description, debug=debug)
 
 
 def runServer(modeldirname, configfile):
-	print "++++++++++++++++++++++++++++++++++++++++"
-	print "serving models in '%s'" % (modeldirname)
-	print "config file '%s'" % (configfile)
-	print "starting cronserver"
-	print "++++++++++++++++++++++++++++++++++++++++"
+	logging.info("++++++++++++++++++++++++++++++++++++++++")
+	logging.info("serving models in '%s'" % (modeldirname))
+	logging.info("config file '%s'" % (configfile))
+	logging.info("starting cronserver")
+	logging.info("++++++++++++++++++++++++++++++++++++++++")
 	Personis_globals.modeldir = modeldirname
 #	cronserver.cronq = Queue()
 	p = Process(target=cronserver.cronserver, args=(cronserver.cronq, Personis_globals.modeldir))
@@ -73,25 +75,25 @@ def runServer(modeldirname, configfile):
 	config.readfp(open(os.path.expanduser(configfile), "r"))
 	port = config.get('personis_server', 'server.server_port')
 	host = config.get('personis_server', 'server.socket_host')
-	print "Modeldir: %s, server: %s, port:%s"% ( Personis_globals.modeldir, host, port)
+	logging.info("Modeldir: %s, server: %s, port:%s"% ( Personis_globals.modeldir, host, port))
 	try:
 		try:
 			bottle.run(host=host, port=port, debug=True)
-		except Exception, E:
-			print "Failed to run Personis Server:" + str(E)
+		except Exception as E:
+			logging.error("Failed to run Personis Server:" + str(E))
 	finally:
-		print "Shutting down Personis Server."
+		logging.info("Shutting down Personis Server.")
 		p.put(dict(op="quit"))
 		p.join()
 
 if __name__ == "__main__":
 	aparser = argparse.ArgumentParser(description='Personis Server')
 	aparser.add_argument('--models', help='directory holding models', default="Models")
-        aparser.add_argument('--log', help='log file', default="stdout")
+	aparser.add_argument('--log', help='log file', default="stdout")
 	aparser.add_argument('--config', help='config file for server', default='~/.personis.conf')
 	args = aparser.parse_args(sys.argv[1:])
-        if args.log != "stdout":
-                sys.stdout = open(args.log, "w", 0)
+	if args.log != "stdout":
+		sys.stdout = open(args.log, "w", 0)
 
 	runServer(args.models, args.config)
 
