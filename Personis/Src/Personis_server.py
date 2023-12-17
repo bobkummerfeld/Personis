@@ -14,7 +14,6 @@ import bottle
 import Personis_base
 import Personis_a
 import Personis_exceptions
-import cPickle
 import types
 import simplejson as json
 #from Crypto.PublicKey import RSA

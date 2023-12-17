@@ -3,11 +3,15 @@ from multiprocessing import Process, Queue
 import time
 import Subscription
 import Personis_base as pmdns
-import filedict
+#import filedict
+import dbm
 
 cronq = Queue() # message q
 
-crondb = filedict.FileDict(filename="crondb.dat")
+try:
+	crondb = dbm.open("crondb.dat", flag="w")
+except:
+	crondb = dbm.open("crondb.dat", flag="c")
 crondblen = len(crondb)
 
 def time_in_spec(t, spec):
@@ -24,9 +28,9 @@ def chkspec(t,spec,orig):
 	#print "spec = ",spec
 	for s in ['minset','hourset','domset','monthset','dowset']:
 		if spec[s] != full[s]:
-			print "%s : %s" % (s, spec[s])
+			print("%s : %s" % (s, spec[s]))
 			if now[s].issubset(spec[s]):
-				print ">>%s : %s" % (s, orig[s].difference(now[s]))
+				print(">>%s : %s" % (s, orig[s].difference(now[s])))
 				speccopy = spec.copy()
 				speccopy[s] = orig[s].difference(now[s])
 				return speccopy
@@ -37,15 +41,15 @@ def checksub(modeldir, m):
 	try:	
 		um = pmdns.Access(modeldir=modeldir, model=sub['modelname'], authType="user", auth=sub['user'] + ":" + sub['password'])
 	except Exception as e:
-		print "Access failed (%s), sub = %s)" % (e, sub)
+		print("Access failed (%s), sub = %s)" % (e, sub))
 		return
-	print "Access OK", sub
+	print("Access OK", sub)
 	try:
 		Subscription.dosub(sub,um)
 	except:
-		print "dosub failed"
+		print("dosub failed")
 		return
-	print "dosub ok"
+	print("dosub ok")
 	
 
 def cronserver(q, modeldir):
@@ -96,7 +100,7 @@ else
 				else:
 					if time_in_spec(tnow, newspec):
 						newspec = chkspec(tnow, newspec, cronspec)
-						print "=== FIRED newspec ===", time.ctime(), newspec
+						print("=== FIRED newspec ===", time.ctime(), newspec)
 						checksub(modeldir, crondb[i])
 						#print i,":",crondb[i]
 				crondb[i]['newspec'] = newspec
@@ -119,8 +123,9 @@ else
 			m['cronspec'] = dict(minset=minset, hourset=hourset, domset=domset, monthset=monthset, dowset=dowset)
 			m['newspec'] = []
 			crondb[crondblen] = m
-			print "put:", m
+			print("put:", m)
 			crondblen += 1
+			crondb.sync()
 
 
 def weekday(dayname):
@@ -159,7 +164,7 @@ class crontab_parser(object):
     _star = r'\*'
  
     def __init__(self, max_=60):
-	import re
+        import re
         self.max_ = max_
         self.pats = (
                 (re.compile(self._range + self._steps), self._range_steps),
@@ -186,7 +191,7 @@ class crontab_parser(object):
         fr = self._expand_number(toks[0])
         if len(toks) > 1:
             to = self._expand_number(toks[1])
-            return range(fr, min(to + 1, self.max_ + 1))
+            return list(range(fr, min(to + 1, self.max_ + 1)))
         return [fr]
  
     def _range_steps(self, toks):
@@ -203,10 +208,10 @@ class crontab_parser(object):
         return [n for n in numbers if n % steps == 0]
  
     def _expand_star(self, *args):
-        return range(self.max_)
+        return list(range(self.max_))
  
     def _expand_number(self, s):
-        if isinstance(s, basestring) and s[0] == '-':
+        if isinstance(s, str) and s[0] == '-':
             raise self.ParseException("negative numbers not supported")
         try:
             i = int(s)

@@ -12,17 +12,17 @@ import hashlib
 #	import bsddb
 #except:
 #	import bsddb3 as bsddb
-import dbm
+import dbm.gnu as dbm
 from types import *
 import Resolvers
 import Ev_filters
 import simplejson as json
-import Crypto
 from collections import OrderedDict
-from Crypto.PublicKey import RSA
-from Crypto.Signature import PKCS1_PSS
-from Crypto.Hash import SHA256
-from Crypto import Random
+#import Crypto
+#from Crypto.PublicKey import RSA
+#from Crypto.Signature import PKCS1_PSS
+#from Crypto.Hash import SHA256
+#from Crypto import Random
 import binascii
 import calendar
 import datetime
@@ -75,7 +75,7 @@ def MkModel(model=None, modeldir=None, user=None, password=None, description=Non
 	p = hashlib.sha256()
 	if password == None:
 		password = ''
-	p.update(password)
+	p.update(bytes(password,"UTF-8"))
 	mod['password'] = p.hexdigest()
 	mod['apps'] = {} # dictionary of app names and keys
 	mod['requests'] = {} # dictionary of apps requesting authorisation
@@ -103,7 +103,7 @@ def AppRequestAuth(model=None, modeldir=None, app=None, key=None, description=No
 	if modeldir == None:
 		raise ValueError("modeldir is None in MkModel")
 	modeldir = os.path.join(modeldir, model)
-	pubkey = Crypto.PublicKey.RSA.importKey(key)
+#	pubkey = Crypto.PublicKey.RSA.importKey(key)
 
 	(mod, mod_shelf_fd) = shelf_open(os.path.join(modeldir,".model"), "r")
 	moddb = {}
@@ -119,8 +119,8 @@ def AppRequestAuth(model=None, modeldir=None, app=None, key=None, description=No
 
 	moddb['requests'][app]['key'] = pubkey
 	# Generate fingerprint
-	h = Crypto.Hash.SHA256.new()
-	h.update(pubkey.exportKey('PEM'))
+#	h = Crypto.Hash.SHA256.new()
+	h.update(bytes(pubkey.exportKey('PEM'),"UTF-8"))
 	fingerprint = h.hexdigest()
 
 	moddb['requests'][app]['fingerprint'] = fingerprint
@@ -130,50 +130,57 @@ def AppRequestAuth(model=None, modeldir=None, app=None, key=None, description=No
 	shelf_close(mod, mod_shelf_fd)
 
 def generate_app_key(app=None):
-	keysize = 2048	# bits
-	key = RSA.generate(keysize)
-	filename = app + "_key.pem"
+#	keysize = 2048	# bits
+#	key = RSA.generate(keysize)
+	salt = os.urandom(16)
+	kdf = Scrypt(salt=salt, length=32, n=2**14, r=8, p=1,)
+	filename = app + "_key.scrypt"
 	f = open(filename, 'w')
-	keystring = key.exportKey('PEM')
+	keystring = kdf.derive(b'personis')
 	f.write(keystring)
 	f.close()
 	return key
 
 def generate_app_fingerprint(key=None):
-	h = SHA256.new()
-	h.update(key.publickey().exportKey('PEM'))
-	return h.hexdigest()
+#	h = SHA256.new()
+#	h.update(bytes(key.publickey().exportKey('PEM'),"UTF-8"))
+#	return h.hexdigest()
+	return #not implemented yet
 
 def import_app_key(app=None):
-	filename = app + "_key.pem"
-	if not os.path.exists(filename):
-		raise Personis_exceptions.KeyFileNotFoundError("key file %s not found" % (filename))
-	f = open(filename, "r")
-	key = RSA.importKey(f.read())
-	f.close()
-	return key
+#	filename = app + "_key.pem"
+#	if not os.path.exists(filename):
+#		raise Personis_exceptions.KeyFileNotFoundError("key file %s not found" % (filename))
+#	f = open(filename, "r")
+#	key = RSA.importKey(f.read())
+#	f.close()
+#	return key
+	return #not implemented yet
 
 def generate_app_signature(app=None, key=None):
-	if app == None:
-		raise ValueError("No app specified for signature generation")
-
-	dt = datetime.datetime.utcnow()
-	timestamp = calendar.timegm(dt.timetuple())
-	nonce = Random.get_random_bytes(8)
-	noncestring = binascii.hexlify(nonce)
-
-	string = str(timestamp) + "-" + noncestring
-	h = SHA256.new()
-	h.update(string)
-	signer = PKCS1_PSS.new(key)
-	signature = signer.sign(h)
-	signature_string = binascii.hexlify(signature)
-	return string + ":" + signature_string
+#	if app == None:
+#		raise ValueError("No app specified for signature generation")
+#
+#	dt = datetime.datetime.utcnow()
+#	timestamp = calendar.timegm(dt.timetuple())
+#	nonce = Random.get_random_bytes(8)
+#	noncestring = binascii.hexlify(nonce)
+#
+#	string = str(timestamp) + "-" + noncestring
+#	h = SHA256.new()
+#	h.update(string)
+#	signer = PKCS1_PSS.new(key)
+#	signature = signer.sign(h)
+#	signature_string = binascii.hexlify(signature)
+#	return string + ":" + signature_string
+	return #not implemented yet
 
 def shelf_open(shelf_name, mode):
 #	db = bsddb.hashopen(shelf_name, mode)
 #	return shelve.BsdDbShelf(db), None
-	db = dbm.open(shelf_name, flag=mode) 
+	if mode == "w":
+		mode = "cf"
+	db = dbm.open(shelf_name, mode) 
 	return db,None
  
  
@@ -433,7 +440,7 @@ class Access(Resolvers.Access,Ev_filters.Access):
 			p = hashlib.sha256()
 			if self.password == None:
 				self.password = ''
-			p.update(self.password)
+			p.update(bytes(self.password,"UTF-8"))
 			if (self.user == self.moddb['owner']) and (p.hexdigest() == mod['password']):
 				self.usertype = 'owner'
 			else:
@@ -490,10 +497,10 @@ class Access(Resolvers.Access,Ev_filters.Access):
 
 	    # Get app's public key from moddb
 	    key = self.moddb['apps'][app]['key']
-	    h = Crypto.Hash.SHA256.new()
-	    h.update(string)
+#	    h = Crypto.Hash.SHA256.new()
+	    h.update(bytes(string,"UTF-8"))
 	    signature_binary = binascii.unhexlify(signature)
-	    verifier = Crypto.Signature.PKCS1_PSS.new(key)
+#	    verifier = Crypto.Signature.PKCS1_PSS.new(key)
 	    if not verifier.verify(h, signature_binary):
 		    raise ValueError("Signature is not authentic")
 

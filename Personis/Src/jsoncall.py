@@ -1,6 +1,7 @@
 
 import types
-import _pickle as cPickle
+import pickle
+#import _pickle as cPickle
 import requests
 import simplejson as json
 
@@ -41,9 +42,9 @@ def do_call(server, port, fun, args):
 			logging.error(result)
 			# We have returned with an error, so throw it as an exception.
 			if result.has_key("pythonPickel"):
-				raise cPickle.loads(result["pythonPickel"])
+				raise pickle.loads(result["pythonPickel"])
 			elif len(result["val"]) == 3:
-				raise cPickle.loads(str(result["val"][2]))
+				raise pickle.loads(str(result["val"][2]))
 			else:
 				raise Exception(str(result["val"]))
 		else:
