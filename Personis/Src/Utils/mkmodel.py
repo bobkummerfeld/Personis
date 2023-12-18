@@ -18,8 +18,8 @@ from Personis_mkmodel import *
 
 def doit():
 	if len(sys.argv) < 4 or '--modelserver'== sys.argv[-1]:
-		print "usage: mkmodel modelfile modeldir model-name ...."
-		print "or: mkmodel --modelserver modelservername:port modelfile model-name ...."
+		print("usage: mkmodel modelfile modeldir model-name ....")
+		print("or: mkmodel --modelserver modelservername:port modelfile model-name ....")
 		sys.exit(0)
 
 	modelserver = None

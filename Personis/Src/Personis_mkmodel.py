@@ -152,12 +152,9 @@ def docomponent(str, loc, toks):
 			value_list=attrs[0].get('value'),
 			resolver=attrs[0].get('resolver'),
 			Description=attrs[0]['description'])
-		try:
-			res = themodel.mkcomponent(context=curcontext, componentobj=cobj)
-		except:
-			print("mkcomponent failed")
+		res = themodel.mkcomponent(context=curcontext, componentobj=cobj)
 		if res != None:
-			print(res)
+			print("mkcomponent failed: ", res)
 	print("""cobj = Personis_base.Component(Identifier="%s",
 		component_type="%s",
 		value_type="%s",
