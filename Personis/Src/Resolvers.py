@@ -27,7 +27,11 @@ class Access:
 			sets component value to the value from the 
 			last piece of given, non-goal evidence
 		"""
+		#print (">>>> entered _DefaultResolver", flush=True)
 		ev, evcount = component.getevidence(model=model, context=context)
+		if ev == None:
+			component.value = None
+			return component
 		while evcount > 0:
 			if ev != None:
 				if not ("goal" in ev.flags):

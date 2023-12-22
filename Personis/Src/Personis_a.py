@@ -57,17 +57,18 @@ class Access(Personis_base.Access):
 		try:
 			subs,subs_shelf_fd = Personis_base.shelf_open(self.curcontext+"/.subscriptions", "w")
 		except:
+			print("opening subs for <%s> failed"%(self.curcontext+"/.subscriptions"))
 			subs = None
 		cidlist = []
 		cobjlist = []
-		if type(view) is StringType:
+		if isinstance(view, str):
 			if views != None:
 				if view not in views:
 					raise ValueError('"%s" view not found'%(view))
 				cidlist = views[view].component_list
 			else:
 				raise ValueError('"%s" view not found'%(view))
-		elif type(view) is ListType:
+		elif isinstance(view, list):
 			cidlist = view
 		elif view == None: 
 			if comps != None:
@@ -75,9 +76,9 @@ class Access(Personis_base.Access):
 		else:
 			raise TypeError('view "%s" has unknown type'%(repr(view)))
 		for cid in cidlist:
-			if type(cid) == type(''):
+			if isinstance(cid, bytes):
 				cid = str(cid)
-			if type(cid) is StringType:
+			if isinstance(cid, str):
 				if comps != None:
 					if cid in comps:
 						# add sub dict to subs for cid ######
@@ -93,7 +94,7 @@ class Access(Personis_base.Access):
 						raise ValueError('component "%s" not in view "%s" (%s)'%(cid,view,cidlist))
 				else:
 					raise ValueError('component "%s" not found'%(cid))
-			elif type(cid) is ListType:
+			elif isinstance(cid, list):
 				vcontext = self._getcontextdir(cid[:-1])
 				try:
 					vcomps,vcomps_shelf_fd = Personis_base.shelf_open(vcontext+"/.components", "r")

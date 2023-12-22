@@ -16,7 +16,7 @@ import socket
 import os
 import logging
 import argparse
-import ConfigParser
+import configparser
 from multiprocessing import Process, Queue
 import cronserver
 
@@ -30,7 +30,7 @@ class Access(Personis_server.Access):
 		self.modelname = model
 		self.configfile = os.path.expanduser(configfilename)
 
-		self.config = ConfigParser.ConfigParser()
+		self.config = configparser.ConfigParser()
 		
 		try: 
 			self.config.readfp(open(self.configfile, "r"), self.configfile)
@@ -71,7 +71,7 @@ def runServer(modeldirname, configfile):
 	p = Process(target=cronserver.cronserver, args=(cronserver.cronq, Personis_globals.modeldir))
 	p.start()
 
-	config = ConfigParser.ConfigParser()
+	config = configparser.ConfigParser()
 	config.readfp(open(os.path.expanduser(configfile), "r"))
 	port = config.get('personis_server', 'server.server_port')
 	host = config.get('personis_server', 'server.socket_host')

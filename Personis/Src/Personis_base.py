@@ -28,6 +28,7 @@ import binascii
 import calendar
 import datetime
 import Personis_exceptions
+import logging
 
 PERSONIS_VERSION = "$LastChangedRevision: 727 $"
 
@@ -177,25 +178,59 @@ def generate_app_signature(app=None, key=None):
 	return #not implemented yet
 
 class mydb:
+	opendbs = {}
 	def __init__(self, dbfilename, dbmode):
+		#print("+++mydb init: %s,%s"%(dbfilename,dbmode), flush=True)
+		#print("+++mydb opendbs: %s"%(mydb.opendbs), flush=True)
+		if dbfilename in mydb.opendbs:
+			opendb = mydb.opendbs[dbfilename]
+			#print("@@@@@already open %s, %d"%(dbfilename, opendb[2]), flush=True)
+			self.db = opendb[0]
+			mydb.opendbs[dbfilename] = (self.db, dbfilename, opendb[2]+1)
+			return 
 		if dbmode == "w":
-			dbmode = "cf"
+			dbmode = "csu"
+		if dbmode == "r":
+			dbmode = "rsu"
+		dbmode = "csu"
 		self.db = dbm.open(dbfilename, dbmode)
+		mydb.opendbs[dbfilename] = (self.db,dbfilename, 1)
+		return 
 	def close(self):
-		self.db.close()
+		#print("+++closing opendbs: %s, %s"%(mydb.opendbs,self.db), flush=True)
+		for opendb in mydb.opendbs.values():
+			#print("+++ ",opendb, flush=True)
+			if opendb[0] == self.db:
+				if opendb[2] > 1:
+					#print("@@@@@closing: already open %s, %s, %d"%(opendb[0], opendb[1], opendb[2]), flush=True)
+					opendb = (self.db, opendb[1], opendb[2]-1)
+					mydb.opendbs[opendb[1]] = opendb
+					return
+				self.db.close()
+				del mydb.opendbs[opendb[1]]
+				return
+		print("##########closing: not found in mydb.opendbs", flush=True)
 	def __getitem__(self,key):
 		v = pickle.loads(self.db[key])
 		if type(v) == type(b""):
 			v = str(v)
+		#print("===getitem: %s::%s"%(key,v), flush=True)
 		return v
 	def __setitem__(self, key, value):
 		self.db[key] = pickle.dumps(value)
 	def __contains__(self, key):
+		#print("===contains: %s::%s"%(key, key in self.db))
 		return key in self.db
+	def __delitem__(self, key):
+		del self.db[key]
+		return
 	def keys(self):
 		return [k.decode('utf-8') for k in self.db.keys()]
 	def has_key(self, key):
 		return key in self.db
+	def items(self):
+		print("===mydb items",self.db.items(), flush=True)
+		return self.db.items()
 
 def shelf_open(shelf_name, mode):
 #	db = bsddb.hashopen(shelf_name, mode)
@@ -203,6 +238,7 @@ def shelf_open(shelf_name, mode):
 #	if mode == "w":
 #		mode = "cf"
 #	db = dbm.open(shelf_name, mode) 
+	#print("+++++shelf_open: %s, %s"%(shelf_name,mode),flush=True)
 	db = mydb(shelf_name, mode)
 	return db,None
  
@@ -441,6 +477,9 @@ class Access(Resolvers.Access,Ev_filters.Access):
 	returns a user model access object 
 	"""
 	def __init__(self, model=None, modeldir="", authType=None, auth=None, debug=0):
+		logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
+		logging.info(">>>>Access: %s::%s", model, modeldir)
+
 		if model == None:
 			raise ValueError("model is None")
 		if modeldir[0] != '/':
@@ -457,7 +496,6 @@ class Access(Resolvers.Access,Ev_filters.Access):
 			raise ValueError("no model db for '%s'"%(self.modelname))
 		self.moddb = {}
 		for k in mod.keys():
-			print ("k: ",k)
 			self.moddb[k] = mod[k]
 		if authType == 'user':
 			(self.user, self.password) = auth.split(":")
@@ -582,7 +620,7 @@ class Access(Resolvers.Access,Ev_filters.Access):
 			subs = None
 		try:
 			contexts = os.listdir(self.curcontext)
-			contexts = filter(lambda x: os.path.isdir(self.curcontext+"/"+x),contexts)
+			contexts = [x for x in contexts if os.path.isdir(self.curcontext+"/"+x)]
 		except OSError as e:
 			raise ValueError("Component/Context not found: %s/%s" % (context, view))
 		
@@ -659,6 +697,7 @@ class Access(Resolvers.Access,Ev_filters.Access):
 						compresname = vcomps[last_cid].resolver
 					else:
 						compresname = None
+					#print (">>>>>compresname: ",compresname, flush=True)############
 					if self.theresolver != None:
 						compresolver = self.theresolver
 					elif compresname == None:
